@@ -24,7 +24,7 @@ export default function ShayariPage() {
   const shayariData = {
     en: {
       title: "Beautiful Shayari",
-      subtitle: "Express Your Heart's Feelings",
+      subtitle: "Express Your Heart Feelings",
       description: "Discover romantic, emotional, and motivational shayari that speaks to your soul and touches hearts.",
       categories: [
         { id: 'all', label: 'All Shayari', icon: MessageCircle },
