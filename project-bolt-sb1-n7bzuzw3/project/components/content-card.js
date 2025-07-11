@@ -9,9 +9,7 @@ import {
   Copy, 
   Share, 
   Heart, 
-  HeartHandshake, 
   Palette, 
-  Download,
   Facebook,
   Twitter,
   MessageCircle,
@@ -24,9 +22,15 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
-export function ContentCard({ content, tags = [], category, type, language = 'en' }) {
+export function ContentCard({ content, tags = [], category, type, language = 'en', id }) {
   const [isFavorite, setIsFavorite] = useState(false);
-  const [isSharing, setIsSharing] = useState(false);
+
+  useEffect(() => {
+    // Check if item is in favorites
+    const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
+    const isInFavorites = favorites.some(fav => fav.id === id);
+    setIsFavorite(isInFavorites);
+  }, [id]);
 
   const handleCopy = async () => {
     try {
@@ -39,7 +43,7 @@ export function ContentCard({ content, tags = [], category, type, language = 'en
 
   const handleFavorite = () => {
     const favorites = JSON.parse(localStorage.getItem('favorites') || '[]');
-    const contentId = `${type}-${content.slice(0, 50)}`;
+    const contentId = id || `${type}-${content.slice(0, 50)}`;
     
     if (isFavorite) {
       const updated = favorites.filter(fav => fav.id !== contentId);
@@ -108,7 +112,7 @@ export function ContentCard({ content, tags = [], category, type, language = 'en
   };
 
   return (
-    <Card className="group bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 card-hover">
+    <Card className="group bg-white/80 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2 hover:scale-105 card-hover hover-glow animate-fade-in-up">
       <CardContent className="p-6">
         {/* Category Badge */}
         <div className="flex items-center justify-between mb-4">
@@ -193,6 +197,17 @@ export function ContentCard({ content, tags = [], category, type, language = 'en
             </DropdownMenu>
           </div>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateCard}
+            className="transition-all duration-300 hover:scale-105 bg-gradient-to-r from-purple-50 to-pink-50 hover:from-purple-100 hover:to-pink-100"
+          >
+            <Palette className="w-4 h-4 mr-1" />
+            <span className="hidden sm:inline">
+              {language === 'en' ? 'Create Card' : 'कार्ड बनाएं'}
+            </span>
+          </Button>
         </div>
       </CardContent>
     </Card>

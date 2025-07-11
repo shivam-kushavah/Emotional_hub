@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navigation } from '@/components/navigation';
 import { Footer } from '@/components/footer';
 import { ContentCard } from '@/components/content-card';
@@ -10,19 +10,59 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Filter, Gift, Heart, Calendar, Trophy, Sparkles } from 'lucide-react';
+import { apiClient } from '@/lib/api';
+import { toast } from 'sonner';
 
 export default function WishesPage() {
   const [language, setLanguage] = useState('en');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [filteredWishes, setFilteredWishes] = useState([]);
+  const [wishes, setWishes] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0
+  });
 
   useEffect(() => {
     const savedLanguage = localStorage.getItem('language') || 'en';
     setLanguage(savedLanguage);
+    fetchWishes();
   }, []);
 
-  const wishesData = {
+  const fetchWishes = useCallback(async (params = {}) => {
+    setLoading(true);
+    try {
+      const response = await apiClient.getWishes({
+        language,
+        category: selectedCategory !== 'all' ? selectedCategory : undefined,
+        search: searchQuery || undefined,
+        page: pagination.page,
+        limit: pagination.limit,
+        ...params
+      });
+      
+      setWishes(response.wishes);
+      setPagination(response.pagination);
+    } catch (error) {
+      toast.error('Failed to fetch wishes');
+      console.error('Error fetching wishes:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [language, selectedCategory, searchQuery, pagination.page, pagination.limit]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      fetchWishes({ page: 1 });
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [selectedCategory, searchQuery]);
+
+  const categoriesData = {
     en: {
       title: "Beautiful Wishes",
       subtitle: "For Every Special Occasion",
@@ -36,80 +76,6 @@ export default function WishesPage() {
         { id: 'love', label: 'Love', icon: Heart },
         { id: 'friendship', label: 'Friendship', icon: Heart }
       ],
-      wishes: [
-        {
-          id: 1,
-          category: 'birthday',
-          text: "May your birthday be filled with sunshine, smiles, laughter, love, and all the wonderful things that make you happy!",
-          tags: ['birthday', 'celebration', 'joy']
-        },
-        {
-          id: 2,
-          category: 'birthday',
-          text: "Another year older, another year wiser, and another year more amazing! Happy Birthday!",
-          tags: ['birthday', 'wisdom', 'celebration']
-        },
-        {
-          id: 3,
-          category: 'anniversary',
-          text: "Your love story continues to inspire us all. Wishing you both a lifetime of happiness and togetherness!",
-          tags: ['anniversary', 'love', 'togetherness']
-        },
-        {
-          id: 4,
-          category: 'festival',
-          text: "May this festival bring you endless joy, prosperity, and beautiful moments with your loved ones!",
-          tags: ['festival', 'joy', 'prosperity']
-        },
-        {
-          id: 5,
-          category: 'success',
-          text: "Your hard work and dedication have paid off! Congratulations on your amazing achievement!",
-          tags: ['success', 'achievement', 'congratulations']
-        },
-        {
-          id: 6,
-          category: 'love',
-          text: "In your eyes, I found my home. In your heart, I found my love. In your soul, I found my mate.",
-          tags: ['love', 'romance', 'soulmate']
-        },
-        {
-          id: 7,
-          category: 'friendship',
-          text: "A true friend is someone who knows all your stories, but still loves you anyway. Thank you for being that friend!",
-          tags: ['friendship', 'gratitude', 'love']
-        },
-        {
-          id: 8,
-          category: 'birthday',
-          text: "Count your age by friends, not years. Count your life by smiles, not tears. Happy Birthday!",
-          tags: ['birthday', 'friends', 'happiness']
-        },
-        {
-          id: 9,
-          category: 'anniversary',
-          text: "Two hearts, one love, endless memories. Congratulations on another year of beautiful togetherness!",
-          tags: ['anniversary', 'love', 'memories']
-        },
-        {
-          id: 10,
-          category: 'festival',
-          text: "May the lights of this festival illuminate your path to happiness and success throughout the year!",
-          tags: ['festival', 'happiness', 'success']
-        },
-        {
-          id: 11,
-          category: 'success',
-          text: "Success is not just about reaching your destination, but enjoying the journey. Well done!",
-          tags: ['success', 'journey', 'achievement']
-        },
-        {
-          id: 12,
-          category: 'love',
-          text: "Love is not about finding the perfect person, but about seeing an imperfect person perfectly.",
-          tags: ['love', 'perfection', 'understanding']
-        }
-      ]
     },
     hi: {
       title: "सुंदर शुभकामनाएं",
@@ -124,101 +90,10 @@ export default function WishesPage() {
         { id: 'love', label: 'प्रेम', icon: Heart },
         { id: 'friendship', label: 'दोस्ती', icon: Heart }
       ],
-      wishes: [
-        {
-          id: 1,
-          category: 'birthday',
-          text: "आपका जन्मदिन धूप, मुस्कान, हंसी, प्यार और उन सभी अद्भुत चीजों से भरा हो जो आपको खुश करती हैं!",
-          tags: ['जन्मदिन', 'जश्न', 'खुशी']
-        },
-        {
-          id: 2,
-          category: 'birthday',
-          text: "एक साल और बड़े, एक साल और बुद्धिमान, और एक साल और भी शानदार! जन्मदिन मुबारक!",
-          tags: ['जन्मदिन', 'बुद्धि', 'जश्न']
-        },
-        {
-          id: 3,
-          category: 'anniversary',
-          text: "आपकी प्रेम कहानी हम सभी को प्रेरणा देती रहती है। आप दोनों को खुशी और साथ की जिंदगी की शुभकामनाएं!",
-          tags: ['वर्षगांठ', 'प्रेम', 'साथ']
-        },
-        {
-          id: 4,
-          category: 'festival',
-          text: "यह त्योहार आपके लिए अनगिनत खुशी, समृद्धि और अपनों के साथ सुंदर पल लेकर आए!",
-          tags: ['त्योहार', 'खुशी', 'समृद्धि']
-        },
-        {
-          id: 5,
-          category: 'success',
-          text: "आपकी मेहनत और समर्पण का फल मिल गया है! आपकी शानदार उपलब्धि के लिए बधाई!",
-          tags: ['सफलता', 'उपलब्धि', 'बधाई']
-        },
-        {
-          id: 6,
-          category: 'love',
-          text: "आपकी आंखों में मुझे मेरा घर मिला। आपके दिल में मुझे मेरा प्रेम मिला। आपकी आत्मा में मुझे मेरा साथी मिला।",
-          tags: ['प्रेम', 'रोमांस', 'आत्मा']
-        },
-        {
-          id: 7,
-          category: 'friendship',
-          text: "सच्चा दोस्त वह है जो आपकी सभी कहानियां जानता है, फिर भी आपसे प्यार करता है। ऐसा दोस्त होने के लिए धन्यवाद!",
-          tags: ['दोस्ती', 'कृतज्ञता', 'प्रेम']
-        },
-        {
-          id: 8,
-          category: 'birthday',
-          text: "अपनी उम्र दोस्तों से गिनें, सालों से नहीं। अपनी जिंदगी मुस्कान से गिनें, आंसुओं से नहीं। जन्मदिन मुबारक!",
-          tags: ['जन्मदिन', 'दोस्त', 'खुशी']
-        },
-        {
-          id: 9,
-          category: 'anniversary',
-          text: "दो दिल, एक प्रेम, अनगिनत यादें। सुंदर साथ के एक और साल की बधाई!",
-          tags: ['वर्षगांठ', 'प्रेम', 'यादें']
-        },
-        {
-          id: 10,
-          category: 'festival',
-          text: "इस त्योहार की रोशनी आपके खुशी और सफलता के रास्ते को साल भर रोशन करती रहे!",
-          tags: ['त्योहार', 'खुशी', 'सफलता']
-        },
-        {
-          id: 11,
-          category: 'success',
-          text: "सफलता सिर्फ मंजिल तक पहुंचने का नाम नहीं, बल्कि यात्रा का आनंद लेने का भी है। शाबाश!",
-          tags: ['सफलता', 'यात्रा', 'उपलब्धि']
-        },
-        {
-          id: 12,
-          category: 'love',
-          text: "प्रेम परफेक्ट इंसान ढूंढने का नाम नहीं, बल्कि अपूर्ण इंसान को पूर्ण रूप से देखने का है।",
-          tags: ['प्रेम', 'पूर्णता', 'समझ']
-        }
-      ]
     }
   };
 
-  const currentData = wishesData[language];
-
-  useEffect(() => {
-    let filtered = currentData.wishes;
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(wish => wish.category === selectedCategory);
-    }
-
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(wish => 
-        wish.text.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        wish.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
-
-    setFilteredWishes(filtered);
-  }, [selectedCategory, searchQuery, currentData.wishes]);
+  const currentData = categoriesData[language];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-purple-900 dark:to-blue-900">
@@ -276,29 +151,64 @@ export default function WishesPage() {
           <div className="mb-6">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               {language === 'en' 
-                ? `Showing ${filteredWishes.length} wish${filteredWishes.length !== 1 ? 'es' : ''}`
-                : `${filteredWishes.length} शुभकामना${filteredWishes.length !== 1 ? 'एं' : ''} दिखाई जा रही हैं`
+                ? `Showing ${wishes.length} wish${wishes.length !== 1 ? 'es' : ''} of ${pagination.total}`
+                : `${pagination.total} में से ${wishes.length} शुभकामना${wishes.length !== 1 ? 'एं' : ''} दिखाई जा रही हैं`
               }
             </p>
           </div>
 
-          {/* Wishes Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredWishes.map((wish) => (
-              <ContentCard
-                key={wish.id}
-                content={wish.text}
-                tags={wish.tags}
-                category={wish.category}
-                type="wish"
-                language={language}
-              />
-            ))}
-          </div>
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="animate-shimmer h-48 rounded-lg"></div>
+              ))}
+            </div>
+          ) : (
+            <>
+              {/* Wishes Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in-up">
+                {wishes.map((wish, index) => (
+                  <div key={wish._id} className={`animate-scale-in stagger-${(index % 5) + 1}`}>
+                    <ContentCard
+                      content={wish.content}
+                      tags={wish.tags}
+                      category={wish.category}
+                      type="wish"
+                      language={language}
+                      id={wish._id}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination */}
+              {pagination.pages > 1 && (
+                <div className="flex justify-center mt-8 space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchWishes({ page: pagination.page - 1 })}
+                    disabled={pagination.page === 1}
+                  >
+                    {language === 'en' ? 'Previous' : 'पिछला'}
+                  </Button>
+                  <span className="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
+                    {pagination.page} of {pagination.pages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchWishes({ page: pagination.page + 1 })}
+                    disabled={pagination.page === pagination.pages}
+                  >
+                    {language === 'en' ? 'Next' : 'अगला'}
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
 
           {/* No Results */}
-          {filteredWishes.length === 0 && (
-            <div className="text-center py-12">
+          {!loading && wishes.length === 0 && (
+            <div className="text-center py-12 animate-fade-in-up">
               <div className="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Search className="w-12 h-12 text-gray-400" />
               </div>
